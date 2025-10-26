@@ -22,15 +22,15 @@ export async function POST(request: Request) {
       console.log("Document received: ", document.id);
           
       try {
-        createResource({ content: document.text}, document.filename, document.page) 
+        await createResource({ content: document.text}, document.filename, document.page);
       } catch (error) {
         console.error("Error creating resource: ", error);
-        let errmsg = {error: "Error creating resource"}
+        let errmsg = {error: "Error creating resource"};
         if (error instanceof Error && error.message.length > 0) {
           Object.assign(errmsg, { details: error.message });
         }
         return new Response(JSON.stringify(errmsg), {
-          status: 400,
+          status: 500,
           headers: { 'Content-Type': 'application/json' }
         });
       }
