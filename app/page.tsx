@@ -2,15 +2,27 @@
 
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { nanoid } from 'nanoid';
 
 export default function Chat() {
   const [input, setInput] = useState('');
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+
+  // Generate a session ID that persists for the entire chat session
+  const sessionId = useMemo(() => nanoid(), []);
+
   const { messages, sendMessage } = useChat({
+    id: sessionId,
     transport: new DefaultChatTransport({
       api: '/api/chat',
+      prepareSendMessagesRequest: ({ messages }) => ({
+        body: { id: sessionId, messages },
+      }),
     }),
+    onError: (error) => {
+      console.error('Chat error:', error);
+    },
   });
 
   const toggleToolDetails = (messageId: string, partIndex: number) => {
