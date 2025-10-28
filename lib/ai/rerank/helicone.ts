@@ -3,7 +3,7 @@ import { ModelProvider, ModelUsage } from "rerank";
 import { performance } from "perf_hooks";
 
 /**
- * Helicone proxy provider for rerank-ts library
+ * Helicone AI provider for rerank-ts library
  */
 export class ProviderHelicone implements ModelProvider {
   model: string;
@@ -14,7 +14,7 @@ export class ProviderHelicone implements ModelProvider {
   
   /**
    * Creates an LLM Re-Ranker provider using Helicone proxy.
-   * @param model One of the supported models. See https://www.helicone.ai/models for details, only openAI is supported.
+   * @param model One of the supported models. See https://www.helicone.ai/models for list of models, only OpenAI is supported for now.
    * @param apiKey Helicone API key
    */
   constructor(model: string, apiKey: string) {

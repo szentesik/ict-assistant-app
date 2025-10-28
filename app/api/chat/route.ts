@@ -44,8 +44,13 @@ export async function POST(req: Request) {
           question: z.string().describe('the users question'),
         }),
         execute: async ({ question }) => {
-          console.log(`Tool call (getInformation): '${question}'`)
-          return findRelevantContent(question)},
+          console.log(`Tool call (getInformation): '${question}'`)         
+          const relevantGuides = await findRelevantContent(question);          
+          if (typeof relevantGuides === 'string') {
+            return relevantGuides;  // Something went wrong, return the reason
+          }
+          return relevantGuides.map(guide => guide.content).join('\n')    // Return all text from retrieval
+        },
       }),
     },
     onError({ error }) {

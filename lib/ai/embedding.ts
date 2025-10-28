@@ -42,7 +42,17 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
   return embedding;
 };
 
-export const findRelevantContent = async (userQuery: string) => {
+export type RelevantContent = {
+  id: string;
+  content: string;
+  filename: string | null;
+  page: number | null;
+  similarity: number;
+  originalRank?: number;
+  rerank?: number;
+};
+
+export const findRelevantContent = async (userQuery: string): Promise<RelevantContent[] | string> => {
   const userQueryEmbedded = await generateEmbedding(userQuery);
   const similarity = sql<number>`1 - (${cosineDistance(
     embeddings.embedding,
@@ -69,12 +79,12 @@ export const findRelevantContent = async (userQuery: string) => {
 
     console.log(`findRelevantContent: ${similarGuides.length} guides found`)
     if(similarGuides.length <= 4) {
-      return similarGuides.map(guide => guide.content).join('\n');
+      return similarGuides;
     }
 
     // rerank
-    const rerankedResult = await rerank(similarGuides, userQuery)
-    return rerankedResult.result.slice(0, 3).join('\n');  // Return the best 4 results
+    const rerankedGuides = await rerank(similarGuides, userQuery)
+    return rerankedGuides.slice(0, 3);  // Return the best 4 results
   } catch (error) {
     console.error('findRelevantContent: Exception while accessing the database.', error)
     return "Knowledge base is temporarily not available.";
