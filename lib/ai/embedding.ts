@@ -5,7 +5,7 @@ import { cosineDistance, desc, gt, sql } from 'drizzle-orm';
 import { db } from '@/lib/db';
 import { embeddings } from '@/lib/db/schema/resources';
 import { retryWithBackoff } from '@/lib/utils/retry';
-import { LLMReranker, ProviderOpenAI } from "rerank";
+import { rerank } from './rerank/rerank';
 
 const embeddingModel = openai.embedding('text-embedding-3-small');
 
@@ -41,12 +41,6 @@ export const generateEmbedding = async (value: string): Promise<number[]> => {
   );
   return embedding;
 };
-
-const rerank = async (searchResults: {content: string}[], userQuery: string) => {
-  const provider = new ProviderOpenAI('gpt-4-turbo', process.env.OPENAI_API_KEY ?? 'api-key-not-found');
-  const reranker = new LLMReranker(provider);
-  return await reranker.rerank(searchResults, "content", "content", userQuery);
-}  
 
 export const findRelevantContent = async (userQuery: string) => {
   const userQueryEmbedded = await generateEmbedding(userQuery);
