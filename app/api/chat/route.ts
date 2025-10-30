@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         }),
         execute: async ({ question }) => {
           console.log(`Tool call (getInformation): '${question}'`)         
-          const relevantGuides = await findRelevantContent(question);          
+          const relevantGuides = await findRelevantContent(question);
           if (typeof relevantGuides === 'string') {
             return relevantGuides;  // Something went wrong, return the reason
           }

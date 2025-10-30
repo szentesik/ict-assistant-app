@@ -84,7 +84,7 @@ export const findRelevantContent = async (userQuery: string): Promise<RelevantCo
 
     // rerank
     const rerankedGuides = await rerank(similarGuides, userQuery)
-    return rerankedGuides.slice(0, 3);  // Return the best 4 results
+    return rerankedGuides.slice(0, 4);  // Return the best 4 results
   } catch (error) {
     console.error('findRelevantContent: Exception while accessing the database.', error)
     return "Knowledge base is temporarily not available.";
