@@ -1,4 +1,5 @@
-import { openai } from '@ai-sdk/openai';
+//import { openai } from '@ai-sdk/openai';
+import { openai } from '@/lib/ai/client';   // Using Helicone proxy
 import { embed, embedMany } from 'ai';
 import { cosineDistance, desc, gt, sql } from 'drizzle-orm';
 
