@@ -2,23 +2,31 @@
 import { openai } from '@/lib/ai/client';   // Using Helicone proxy
 import {
   convertToModelMessages,
+  generateText,
   streamText,
-  tool,
-  UIMessage,
-  stepCountIs,
+  tool,  
+  stepCountIs,  
 } from 'ai';
 import { z } from 'zod';
 import { findRelevantContent } from '@/lib/ai/embedding';
+import { NextResponse } from 'next/server';
 import { nanoid } from 'nanoid';
 import {systemPrompt} from '@/lib/ai/resources';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
-export async function POST(req: Request) {  
+export async function POST(req: Request) { 
   const body = await req.json();
-  const { id: chatId, messages } = body ?? {};
-  
+  console.log('body:', body)
+  const { messages, id: chatId } = body ?? {};
+
+  const accept = req.headers.get('accept') ?? '';
+  const wantsJson = accept.includes('application/json') &&
+    !accept.includes('text/event-stream') &&
+    !accept.includes('application/x-ndjson');
+
+  // Use provided chat id/body or header for Helicone tracking, fallback to generating one
   const currentSessionId = chatId || nanoid();
   console.log('currentSessionId', currentSessionId);
 
@@ -30,7 +38,7 @@ export async function POST(req: Request) {
     'Helicone-User-Id': 'krisz@cstainside.com'
   };
 
-  const result = streamText({
+  const common = {
     model: openai('gpt-5'),
     //model: openai('gpt-4o-mini'),
     messages: convertToModelMessages(messages),
@@ -52,11 +60,17 @@ export async function POST(req: Request) {
           return relevantGuides.map(guide => guide.content).join('\n')    // Return all text from retrieval
         },
       }),
-    },
-    onError({ error }) {
-        console.error(error); 
-      },    
-  });
+    }    
+  } as const;
 
+  if (wantsJson) {
+    const { text } = await generateText(common);
+    return NextResponse.json(
+      { answer: text },
+      { status: 200, headers: { 'Cache-Control': 'no-store' } },
+    );
+  }
+
+  const result = streamText(common); 
   return result.toUIMessageStreamResponse();
 }

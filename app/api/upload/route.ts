@@ -14,7 +14,7 @@ const Document = z.object({
   text: z.string()
 });
 
-export async function POST(request: Request) {  
+export async function POST(request: Request) {
   try {      
       const req = await request.json();      
       const document = Document.parse(req)
