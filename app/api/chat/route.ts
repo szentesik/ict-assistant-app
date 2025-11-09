@@ -18,7 +18,7 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) { 
   const body = await req.json();
-  console.log('body:', body)
+  //console.log('body:', body)
   const { messages, id: chatId } = body ?? {};
 
   const accept = req.headers.get('accept') ?? '';
@@ -64,11 +64,19 @@ export async function POST(req: Request) {
   } as const;
 
   if (wantsJson) {
-    const { text } = await generateText(common);
-    return NextResponse.json(
-      { answer: text },
-      { status: 200, headers: { 'Cache-Control': 'no-store' } },
-    );
+    try {
+      const { text } = await generateText(common);
+      return NextResponse.json(
+        { answer: text },
+        { status: 200, headers: { 'Cache-Control': 'no-store' } },
+      );
+    } catch (error) {
+      console.error('Exception in generateText:', error)
+      return NextResponse.json(
+        { error: 'AI call failed' },
+        { status: 500, headers: { 'Cache-Control': 'no-store' } },
+      );
+    }    
   }
 
   const result = streamText(common); 
