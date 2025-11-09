@@ -12,7 +12,7 @@ export default function Chat() {
   // Generate a session ID that persists for the entire chat session
   const sessionId = useMemo(() => nanoid(), []);
 
-  const { messages, sendMessage } = useChat({
+  const { messages, sendMessage, status } = useChat({
     id: sessionId,
     transport: new DefaultChatTransport({
       api: '/api/chat',
@@ -24,6 +24,8 @@ export default function Chat() {
       console.error('Chat error:', error);
     },
   });
+
+  const isLoading = status === 'submitted' || status === 'streaming';
 
   const toggleToolDetails = (messageId: string, partIndex: number) => {
     const key = `${messageId}-${partIndex}`;
@@ -80,6 +82,18 @@ export default function Chat() {
             </div>
           );
         })}
+        
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+            <span className="text-sm">Thinking...</span>
+          </div>
+        )}
       </div>
 
       <form
@@ -94,6 +108,7 @@ export default function Chat() {
           value={input}
           placeholder="Ask something..."
           onChange={e => setInput(e.currentTarget.value)}
+          disabled={isLoading}
         />
       </form>
     </div>

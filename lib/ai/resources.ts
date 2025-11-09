@@ -54,7 +54,7 @@ export const systemPrompt =
     - Answer in a polite, friendly tone. Translate user input to English for lookup when needed, but deliver the answer in the user's original language.
     - If the tools don't contain the necessary information, respond: “Sorry, I don't know.” Do not speculate.
     - Where users request spec references, include the exact standard name and, if available in tools, the section/annex title or number.
-    - Refer the tool calls as "Knowledge base" in provided responses`
+    - Refer the tool calls as knowledge base in provided responses`
     
     
 
