@@ -30,6 +30,19 @@ export const embeddings = pgTable("embeddings", {
   embedding: vector("embedding", { dimensions: 1536 }).notNull(),
 });
 
+export const feedback = pgTable("feedback", {
+  id: varchar("id", { length: 191 })
+    .primaryKey()
+    .$defaultFn(() => nanoid()),
+  sessionId: varchar("session_id", { length: 191 }).notNull(),
+  createdAt: timestamp("created_at")
+    .notNull()
+    .default(sql`now()`),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  isPositive: integer("is_positive").notNull(), // 1 for thumbs up, 0 for thumbs down  
+});
+
 // Schema for resources - used to validate API requests
 export const insertResourceSchema = createSelectSchema(resources)
   .extend({})

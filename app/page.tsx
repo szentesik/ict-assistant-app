@@ -4,10 +4,13 @@ import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useState, useMemo } from 'react';
 import { nanoid } from 'nanoid';
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 
 export default function Chat() {
   const [input, setInput] = useState('');
   const [expandedTools, setExpandedTools] = useState<Record<string, boolean>>({});
+  const [submittedFeedback, setSubmittedFeedback] = useState<Record<string, boolean>>({});
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState<Record<string, boolean>>({});
 
   // Generate a session ID that persists for the entire chat session
   const sessionId = useMemo(() => nanoid(), []);
@@ -35,12 +38,78 @@ export default function Chat() {
     }));
   };
 
+  const getQuestionForAnswer = (answerMessageId: string): string | null => {
+    const answerIndex = messages.findIndex(m => m.id === answerMessageId);
+    if (answerIndex === -1 || answerIndex === 0) return null;
+    
+    // Find the most recent user message before this assistant message
+    for (let i = answerIndex - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') {
+        const textParts = messages[i].parts.filter(p => p.type === 'text');
+        return textParts.map(p => p.text).join(' ') || null;
+      }
+    }
+    return null;
+  };
+
+  const getAnswerText = (message: typeof messages[0]): string => {
+    const textParts = message.parts.filter(p => p.type === 'text');
+    return textParts.map(p => p.text).join(' ') || '';
+  };
+
+  const handleFeedback = async (messageId: string, isPositive: boolean) => {
+    const message = messages.find(m => m.id === messageId);
+    if (!message || message.role !== 'assistant') return;
+
+    const question = getQuestionForAnswer(messageId);
+    const answer = getAnswerText(message);
+
+    if (!question || !answer) {
+      console.error('Could not find question or answer for feedback');
+      return;
+    }
+
+    // Prevent duplicate submissions
+    if (submittedFeedback[messageId]) {
+      return;
+    }
+
+    setIsSubmittingFeedback(prev => ({ ...prev, [messageId]: true }));
+
+    try {
+      const response = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          question,
+          answer,
+          isPositive,
+        }),
+      });
+
+      if (response.ok) {
+        setSubmittedFeedback(prev => ({ ...prev, [messageId]: true }));
+      } else {
+        console.error('Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+    } finally {
+      setIsSubmittingFeedback(prev => ({ ...prev, [messageId]: false }));
+    }
+  };
+
   return (
     <div className="flex flex-col w-full max-w-2xl py-24 mx-auto stretch">
       <div className="space-y-4">
         {messages.map(m => {
           const textParts = m.parts.filter(p => p.type === 'text');
           const toolParts = m.parts.filter(p => p.type.startsWith('tool-'));
+          const hasFeedback = submittedFeedback[m.id];
+          const isSubmitting = isSubmittingFeedback[m.id];
           
           return (
             <div key={m.id} className="whitespace-pre-wrap">
@@ -77,6 +146,39 @@ export default function Chat() {
                       ))}
                     </div>
                   </details>
+                )}
+
+                {/* Feedback buttons for assistant messages */}
+                {m.role === 'assistant' && textParts.length > 0 && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <button
+                      onClick={() => handleFeedback(m.id, true)}
+                      disabled={hasFeedback || isSubmitting}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        hasFeedback
+                          ? 'bg-green-100 text-green-600 cursor-not-allowed'
+                          : 'hover:bg-gray-100 text-gray-600 hover:text-green-600'
+                      } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title="Thumbs up"
+                    >
+                      <ThumbsUp size={18} />
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(m.id, false)}
+                      disabled={hasFeedback || isSubmitting}
+                      className={`p-1.5 rounded-md transition-colors ${
+                        hasFeedback
+                          ? 'bg-red-100 text-red-600 cursor-not-allowed'
+                          : 'hover:bg-gray-100 text-gray-600 hover:text-red-600'
+                      } ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      title="Thumbs down"
+                    >
+                      <ThumbsDown size={18} />
+                    </button>
+                    {hasFeedback && (
+                      <span className="text-xs text-gray-500 ml-1">Feedback submitted</span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
