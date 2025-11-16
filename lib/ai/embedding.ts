@@ -71,7 +71,7 @@ export const findRelevantContent = async (userQuery: string): Promise<RelevantCo
     .from(embeddings)
     .where(gt(similarity, 0.5))
     .orderBy((t) => desc(t.similarity))
-    .limit(10);
+    .limit(12);
   
     if (similarGuides.length === 0) {
       console.warn('findRelevantContent: empty result')
@@ -85,7 +85,7 @@ export const findRelevantContent = async (userQuery: string): Promise<RelevantCo
 
     // rerank
     const rerankedGuides = await rerank(similarGuides, userQuery)
-    return rerankedGuides.slice(0, 4);  // Return the best 4 results
+    return rerankedGuides.slice(0, 6);  // Return the best 6 results
   } catch (error) {
     console.error('findRelevantContent: Exception while accessing the database.', error)
     return "Knowledge base is temporarily not available.";

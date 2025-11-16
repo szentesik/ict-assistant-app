@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     model: openai('gpt-5'),
     //model: openai('gpt-4o-mini'),
     messages: convertToModelMessages(messages),
-    stopWhen: stepCountIs(12),
+    stopWhen: stepCountIs(16),
     headers: heliconeHeaders,
     system: systemPrompt,
     tools: {      
